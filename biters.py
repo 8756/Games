@@ -7,14 +7,15 @@ class Myself(object):
         # want to make dictionary of weapon so it can retrieve what weapon
         # character has, and it's points of strength
         self.weapon = 0 
-        self.strength = self.sleep + self.food + self.water
+        self.strength = self.food #self.sleep + self.food + self.water
         self.confidence = self.weapon + self.sleep
 
 class Backpack(object):
 
-    def __init__(self):
-        self.myself = Myself()
-        self.contents = []
+    # Keeping 'contents' here instead of in the '__init__' fuction allows
+    # it to act like a global variable, instead of each class making 
+    # a blank list
+    contents = []
 
     findable_items = {
         'hammer': 1,
@@ -28,33 +29,74 @@ class Backpack(object):
         'jug_h20': 3
     }
 
+    def __init__(self):
+        self.myself = Myself()
+
     def add_item(self, aquired_item):
-        
         print "Adding %s to your backpack." % aquired_item
         self.contents.append(aquired_item)
-        print "You have this in your backpack\n", self.contents
-        points = Backpack.findable_items.get(aquired_item)
+        print "You have these things in your backpack:\n", self.contents
+        print "can I make it look like this too?" 
+        for index, item in enumerate(self.contents):
+            print index, item
         
-        if aquired_item in ('twinke', 'beans', 'jerky'):
-            category = "food"
-            self.myself.food = self.myself.food + int(points)
+    def eat_drink(self):
+        print "Mmm, thirsty or hungy you are? Gooood."
+        print "Let's look in your backpack"
+        #print self.contents
+        for index, item in enumerate(self.contents):
+            print index, item
 
-        if aquired_item in ('bottle_h20', 'nalgene_h20', 'jug_h20'):
-            category = "water"
-            self.myself.water = points
+        print "What do you want to consume?"
+        consumable = str(raw_input("---> "))
+        print "Is what you typed actually in your backpack?"
 
-        if aquired_item in ('hammer', 'knife', 'sword'):
-            category = "weapon"
-            self.myself.weapon = points
+        print any(consumable.lower() == val.lower() for val in self.contents)
+        eat = any(consumable.lower() == val.lower() for val in self.contents)
+        if eat == True:
+            if consumable in ('twinke', 'beans', 'jerky'):
+                category = "food"
+                points = Backpack.findable_items.get(consumable)
+                self.myself.food = self.myself.food + points
 
-        print "And that added %d points to %s category." % (points, category) 
+            elif consumable in ('bottle_h20', 'nalgene_h20', 'jug_h20'):
+                category = "water"
+                points = Backpack.findable_items.get(consumable)
+                self.myself.water = self.myself.water + points
 
+            print "That added %d points to %s category." % (points, 
+                    category) 
+            return 'the_street'
+
+        else:
+            print "You don't have that in your backpack."
+            choice = raw_input("Try again or back to the Street?\n-->")
+
+            if choice in ("ta", "try again", "Try again"):
+                #doesn't work yet!
+                Backpack.eat_drink()
+
+            else:
+                return 'the_street'
+
+
+
+
+
+
+
+
+
+#        def weapon():
+#        if consumable in ('hammer', 'knife', 'sword'):
+#            category = "weapon"
+#            self.myself.weapon = points
+#            print "now your weapon =", self.myself.weapon
 
 class Engine(object):
     
     def __init__(self, area_map):
        print "The Engine has recieved %s area_map." % area_map
-       self.myself = Myself()
        self.area_map = area_map
 
     def survive(self):
@@ -66,13 +108,6 @@ class Engine(object):
             next_area_map_name = current_area_map.enter()
             print "next area_map", next_area_map_name
             current_area_map = self.area_map.next_area(next_area_map_name)
-            print """
-                Your sleep is at %d, %d points of food,
-                %d points of water, %d points of weapon,
-                feeling %d strong, and %d confident.
-                """ % (self.myself.sleep, self.myself.food, 
-                        self.myself.water, self.myself.weapon,
-                        self.myself.strength, self.myself.confidence)
             print "You now wander to", current_area_map
 
 
@@ -88,6 +123,14 @@ class TheStreet(object):
             You've survived the initial onslaught, and are wandering Boulder.
             What do you want to do?
         """
+        print """
+             Your sleep is at %d, %d points of food,
+             %d points of water, %d points of weapon,
+             feeling %d strong, and %d confident.
+        """ % (self.myself.sleep, self.myself.food, 
+                    self.myself.water, self.myself.weapon,
+                    self.myself.strength, self.myself.confidence)
+
         choice = raw_input("--->")
         print "\n_-_-_-_-_-_-_\n"
 
@@ -111,22 +154,20 @@ class TheStreet(object):
 
             if self.myself.sleep == 0:
                 print "You sure need it"
+                return 'the_street'
 
             elif self.myself.sleep > 0:
                 print "Really? You're not that sleepy."
+                return 'the_street'
 
             else:
                 print "Ok"
-                
+                return 'the_street'
 
         elif choice in ("e", "eat"):
-            print "Hungry? Let's see if you have any food in your backpack."
-            print self.backpack.contents
-            if self.myself.food == 0:
-                print "Nope, you got nothin to eat."
-
-            if self.myself.food > 0:
-                print "Yum! What's in your backpack?"
+            print "What's in there?", self.backpack.contents
+            self.backpack.eat_drink()
+            return 'the_street'
 
         else:
             print """
@@ -177,7 +218,12 @@ class VitaminCottage(object):
                 return 'the_street'
 
         if asile in ("2", "two"):
-            pass
+            print "Nothin here."
+            go = raw_input("Want to explore any other asiles?\ny or n? ")
+            if go in ("y", "yes"):
+                return 'vitamin_cottage'
+            if go in ("n", "no"):
+                return 'the_street'
 
 class Chautauqua(object):
 
